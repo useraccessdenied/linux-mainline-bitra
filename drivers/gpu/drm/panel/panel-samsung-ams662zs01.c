@@ -169,6 +169,9 @@ static int ams662zs01_prepare(struct drm_panel *panel)
 	ret = mipi_dsi_picture_parameter_set(ctx->dsi, &pps);
 	if (ret < 0) {
 		dev_err(panel->dev, "failed to transmit PPS: %d\n", ret);
+		/* do not leave the panel powered with an unfinished init */
+		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+		regulator_bulk_disable(ARRAY_SIZE(ams662zs01_supplies), ctx->supplies);
 		return ret;
 	}
 
@@ -374,6 +377,8 @@ static void ams662zs01_remove(struct mipi_dsi_device *dsi)
 {
 	struct ams662zs01 *ctx = mipi_dsi_get_drvdata(dsi);
 	int ret;
+
+	ctx->connector = NULL;	/* never dereferenced after the panel is unbound */
 
 	ret = mipi_dsi_detach(dsi);
 	if (ret < 0)

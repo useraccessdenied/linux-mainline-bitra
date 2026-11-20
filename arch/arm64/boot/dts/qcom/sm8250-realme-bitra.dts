@@ -50,8 +50,6 @@
 &mdss_dp { status = "disabled"; };
 &gpu { status = "disabled"; };
 &gmu { status = "disabled"; };
-&pcie0 { status = "disabled"; };
-&pcie0_phy { status = "disabled"; };
 &pcie2 { status = "disabled"; };
 &pcie2_phy { status = "disabled"; };
 &pm8150l_flash { status = "disabled"; };
@@ -88,4 +86,14 @@
 &pon {
 	mode-bootloader = <0x2>;
 	mode-recovery = <0x1>;
+};
+
+/*
+ * Wi-Fi/BT PMU: the OnePlus tree takes the 0.95 V PMU rails from PM8009 smpf2, which has no RPMh address on this phone
+ * ("could not find RPMh address for resource smpf2"). The stock cnss node powers the chip from pm8150_s6 (aon, 0.95 V),
+ * pm8150_s4 (1.8 V io), pm8150_s5 (1.9 V rfa1) and pm8150a_s8 (1.3 V rfa2): use s6 for the two 0.95 V inputs as well.
+ */
+&qca6390_pmu {
+	vddpmu-supply = <&vreg_s6a_0p95>;
+	vddrfa0p95-supply = <&vreg_s6a_0p95>;
 };

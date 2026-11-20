@@ -852,6 +852,16 @@ config DRM_PANEL_SAMSUNG_AMB655X
 	  Say Y or M here if you want to enable support for the
 	  Samsung AMB655X FHD Plus (2400x1080@120Hz) CMD mode panel.
 
+config DRM_PANEL_SAMSUNG_AMS662ZS01
+	tristate "Samsung AMS662ZS01 panel"
+	depends on OF
+	depends on DRM_MIPI_DSI
+	depends on BACKLIGHT_CLASS_DEVICE
+	help
+	  Say Y or M here if you want to enable support for the
+	  Samsung AMS662ZS01 FHD Plus (2400x1080@120Hz) DSC CMD mode panel
+	  found in the realme GT Neo 2.
+
 config DRM_PANEL_SAMSUNG_AMS581VF01
 	tristate "Samsung AMS581VF01 panel"
 	depends on OF

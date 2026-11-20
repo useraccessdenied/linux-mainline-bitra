@@ -44,13 +44,10 @@
 	stride = <(1080 * 4)>;
 };
 
-/* Stage 1: never touch storage, display pipeline, GPU, PCIe or remoteprocs */
+/* Never touch storage, GPU, DP, PCIe or remoteprocs until verified; the display pipeline is enabled for the panel bring-up */
 &ufs_mem_hc { status = "disabled"; };
 &ufs_mem_phy { status = "disabled"; };
-&mdss { status = "disabled"; };
 &mdss_dp { status = "disabled"; };
-&mdss_dsi0 { status = "disabled"; };
-&mdss_dsi0_phy { status = "disabled"; };
 &gpu { status = "disabled"; };
 &gmu { status = "disabled"; };
 &pcie0 { status = "disabled"; };
@@ -75,4 +72,20 @@
  */
 &ramoops {
 	reg = <0x0 0xb0000000 0x0 0x3ff000>;
+};
+
+/* Samsung AMS662ZS01 DSC command-mode panel; wiring from the stock tree (supplies differ from the OnePlus 8T) */
+&display_panel {
+	compatible = "samsung,ams662zs01";
+	vdd-supply = <&vreg_l13a_ts_3p0>;	/* VCI 3.0 V (pm8150_l13) */
+	vddr-supply = <&vreg_l2c_1p2>;		/* vendor "vout" rail (pm8150 C ldo2, 1.2 V) */
+	width-mm = <70>;
+	height-mm = <153>;
+	status = "okay";
+};
+
+/* reboot reasons through the PMIC PON, so `reboot bootloader` lands in ABL fastboot */
+&pon {
+	mode-bootloader = <0x2>;
+	mode-recovery = <0x1>;
 };

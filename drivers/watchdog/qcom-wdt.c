@@ -333,6 +333,14 @@ static int qcom_wdt_probe(struct platform_device *pdev)
 		set_bit(WDOG_HW_RUNNING, &wdt->wdd.status);
 	}
 
+	/*
+	 * The bootloader (ABL on the realme GT Neo 2) leaves the watchdog armed. Tell the core so that
+	 * it keeps petting it from here on (watchdog.handle_boot_enabled) until userspace takes over;
+	 * otherwise a slow boot, e.g. a KASAN/lockdep kernel, gets reset before init runs.
+	 */
+	if (readl(wdt_addr(wdt, WDT_EN)) & QCOM_WDT_ENABLE)
+		set_bit(WDOG_HW_RUNNING, &wdt->wdd.status);
+
 	ret = devm_watchdog_register_device(dev, &wdt->wdd);
 	if (ret)
 		return ret;

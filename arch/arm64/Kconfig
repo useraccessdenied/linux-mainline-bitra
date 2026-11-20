@@ -1,4 +1,10 @@
 # SPDX-License-Identifier: GPL-2.0-only
+config BITRA_DTB_SHIM
+	bool "realme GT Neo 2 bring-up: swap in embedded DTB (ABL only accepts the stock tree)"
+	depends on ARM64 && OF
+	help
+	  Bring-up only; see arch/arm64/kernel/bitra-dtb-shim.c.
+
 config ARM64
 	def_bool y
 	select ACPI_APMT if ACPI

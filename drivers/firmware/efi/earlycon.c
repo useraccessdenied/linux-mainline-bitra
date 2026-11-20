@@ -37,6 +37,9 @@ static int __init efi_earlycon_remap_fb(void)
 	/* bail if there is no bootconsole or it was unregistered already */
 	if (!earlycon_console || !console_is_registered(earlycon_console))
 		return 0;
+#ifdef CONFIG_BITRA_DTB_SHIM
+	/* bring-up: the mapping is kept for the permanent console below */
+#endif
 
 	efi_fb = memremap(fb_base, si->lfb_size, fb_wb ? MEMREMAP_WB : MEMREMAP_WC);
 
@@ -47,6 +50,10 @@ early_initcall(efi_earlycon_remap_fb);
 static int __init efi_earlycon_unmap_fb(void)
 {
 	/* unmap the bootconsole fb unless keep_bootcon left it registered */
+#ifdef CONFIG_BITRA_DTB_SHIM
+	if (efi_fb)
+		return 0;	/* bring-up: permanent console keeps the mapping */
+#endif
 	if (efi_fb && !console_is_registered(earlycon_console))
 		memunmap(efi_fb);
 	return 0;
@@ -273,3 +280,26 @@ static int __init efi_earlycon_setup(struct earlycon_device *device,
 	return 0;
 }
 EARLYCON_DECLARE(efifb, efi_earlycon_setup);
+
+#ifdef CONFIG_BITRA_DTB_SHIM
+/*
+ * Bring-up only: the efifb earlycon is a boot console and is torn down at late init,
+ * which hides everything printed after ~11 s on a phone without UART access.
+ * Register the same writer as a normal console so the panel keeps showing the log.
+ */
+static struct console bitra_efifb_console = {
+	.name	= "bitrafb",
+	.write	= efi_earlycon_write,
+	.flags	= CON_ENABLED,
+	.index	= -1,
+};
+
+static int __init bitra_efifb_console_init(void)
+{
+	if (!efi_fb || !earlycon_console)
+		return 0;
+	register_console(&bitra_efifb_console);
+	return 0;
+}
+late_initcall(bitra_efifb_console_init);
+#endif

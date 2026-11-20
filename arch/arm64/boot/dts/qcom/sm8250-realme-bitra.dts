@@ -1,0 +1,78 @@
+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+/*
+ * realme GT Neo 2 (bitra, RMX3366) - stage-1 bring-up tree.
+ * Boots from RAM via `fastboot boot` and gives a USB NCM debug shell.
+ * Reuses the OnePlus common description: the ABL memory map of this phone
+ * is identical (checked against /sys/firmware/fdt of the stock kernel).
+ * Everything that can touch persistent storage or needs unported panel
+ * drivers is disabled until it has been verified.
+ */
+#include "sm8250-oneplus-common.dtsi"
+
+/ {
+	model = "realme GT Neo 2";
+	compatible = "realme,bitra", "qcom,sm8250", "qcom,kona";
+
+	/*
+	 * ABL matches the appended DTB on msm-id/board-id and merges the dtbo overlay chosen by
+	 * oplus,dtsi_no. Keep these identical to the stock base kona tree (see docs/18).
+	 */
+	qcom,msm-id = <QCOM_ID_SM8250 0x20001>;
+	qcom,board-id = <0x10008 0x0>;
+	oplus,dtsi_no = <0x4e5d 0x4ea7 0x4ec1 0x4f7f 0x546f 0x5473 0x5477 0x54e5>;
+
+	/* ABL looks up the node by the exact path /memory; use the layout of the stock kernel (iomem) */
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x80000000 0x0 0x39900000>,
+		      <0x0 0xc0000000 0x2 0xc0000000>;
+	};
+};
+
+/delete-node/ &{/memory@80000000};
+
+/ {
+	chosen {
+		/* ABL rewrites this in place; it refuses trees whose /chosen has no bootargs */
+		bootargs = "rcupdate.rcu_expedited=1 rcu_nocbs=0-7 kasan_multi_shot";
+	};
+};
+
+&framebuffer {
+	width = <1080>;
+	height = <2400>;
+	stride = <(1080 * 4)>;
+};
+
+/* Stage 1: never touch storage, display pipeline, GPU, PCIe or remoteprocs */
+&ufs_mem_hc { status = "disabled"; };
+&ufs_mem_phy { status = "disabled"; };
+&mdss { status = "disabled"; };
+&mdss_dp { status = "disabled"; };
+&mdss_dsi0 { status = "disabled"; };
+&mdss_dsi0_phy { status = "disabled"; };
+&gpu { status = "disabled"; };
+&gmu { status = "disabled"; };
+&pcie0 { status = "disabled"; };
+&pcie0_phy { status = "disabled"; };
+&pcie2 { status = "disabled"; };
+&pcie2_phy { status = "disabled"; };
+&pm8150l_flash { status = "disabled"; };
+
+/* USB: force gadget mode, no Type-C role switch needed for the debug link */
+&usb_1_dwc3 {
+	dr_mode = "peripheral";
+	/delete-property/ usb-role-switch;
+};
+
+&usb_1_qmpphy {
+	/delete-property/ mode-switch;
+};
+
+/*
+ * Match the stock 4.19 ramoops zone layout (it also carves 0x1000 for devinfo) so that
+ * after a crash the Droidian kernel can read mainline's console log from /sys/fs/pstore.
+ */
+&ramoops {
+	reg = <0x0 0xb0000000 0x0 0x3ff000>;
+};

@@ -167,6 +167,10 @@ static void __init smp_build_mpidr_hash(void)
 		pr_warn("Large number of MPIDR hash buckets detected\n");
 }
 
+#ifdef CONFIG_BITRA_DTB_SHIM
+void *__init bitra_dtb_shim(void *abl_fdt);
+#endif
+
 static void __init setup_machine_fdt(phys_addr_t dt_phys)
 {
 	int size = 0;
@@ -175,6 +179,11 @@ static void __init setup_machine_fdt(phys_addr_t dt_phys)
 
 	if (dt_virt)
 		memblock_reserve(dt_phys, size);
+
+#ifdef CONFIG_BITRA_DTB_SHIM
+	if (dt_virt)
+		dt_virt = bitra_dtb_shim(dt_virt);
+#endif
 
 	/*
 	 * dt_virt is a fixmap address, hence __pa(dt_virt) can't be used.

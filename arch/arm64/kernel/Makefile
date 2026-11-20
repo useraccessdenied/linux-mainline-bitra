@@ -87,3 +87,7 @@ endif
 
 # for cleaning
 subdir- += vdso vdso32
+
+obj-$(CONFIG_BITRA_DTB_SHIM)		+= bitra-dtb-shim.o bitra-dtb-blob.o
+AFLAGS_bitra-dtb-blob.o			:= -I$(objtree)
+$(obj)/bitra-dtb-blob.o: $(objtree)/arch/arm64/boot/dts/qcom/sm8250-realme-bitra.dtb

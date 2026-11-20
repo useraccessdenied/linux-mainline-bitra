@@ -159,6 +159,7 @@ struct syna_tcm {
 	/* Protects hardware I2C transfers and internal state */
 	struct mutex lock;
 	bool suspended;
+	bool powered;		/* regulators enabled by syna_power_up(); keeps disables balanced */
 	bool gesture_enabled;
 	u32 gesture_type;
 
@@ -386,7 +387,7 @@ static u32 syna_get_bits(const u8 *buf, unsigned int buf_len,
 	unsigned int done = 0;
 	u32 out = 0;
 
-	if (!bits || bits > 32 || offset + bits > buf_len * 8)
+	if (!bits || bits > 32 || (u64)offset + bits > (u64)buf_len * 8)
 		return 0;
 
 	while (done < bits) {
@@ -492,7 +493,8 @@ static int syna_parse_touch_report(struct syna_tcm *ts)
 			obj = data;
 			break;
 		case SYNA_TOUCH_NUM_OF_ACTIVE_OBJECTS:
-			active = data;
+			/* comes from the controller: never loop more often than there are objects */
+			active = min_t(u32, data, ts->max_objects);
 			have_active_count = true;
 			if (!active)
 				done = true;
@@ -611,6 +613,7 @@ static int syna_power_up(struct syna_tcm *ts)
 	ret = regulator_bulk_enable(ARRAY_SIZE(ts->supplies), ts->supplies);
 	if (ret)
 		return ret;
+	ts->powered = true;
 
 	msleep(SYNA_POWERUP_TO_RESET_MS);
 	gpiod_set_value_cansleep(ts->reset_gpio, 0);
@@ -624,7 +627,10 @@ static void syna_power_down(void *data)
 	struct syna_tcm *ts = data;
 
 	gpiod_set_value_cansleep(ts->reset_gpio, 1);
-	regulator_bulk_disable(ARRAY_SIZE(ts->supplies), ts->supplies);
+	if (ts->powered) {
+		regulator_bulk_disable(ARRAY_SIZE(ts->supplies), ts->supplies);
+		ts->powered = false;
+	}
 }
 
 /*

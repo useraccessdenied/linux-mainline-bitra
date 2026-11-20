@@ -15,6 +15,7 @@
 #include <drm/drm_atomic.h>
 #include <drm/drm_blend.h>
 #include <drm/drm_crtc.h>
+#include <drm/drm_managed.h>
 #include <drm/drm_flip_work.h>
 #include <drm/drm_framebuffer.h>
 #include <drm/drm_mode.h>
@@ -1875,6 +1876,11 @@ static const struct drm_crtc_helper_funcs dpu_crtc_helper_funcs = {
  *
  * initialize CRTC
  */
+static void dpu_crtc_self_refresh_cleanup(struct drm_device *dev, void *ptr)
+{
+	drm_self_refresh_helper_cleanup(ptr);
+}
+
 struct drm_crtc *dpu_crtc_init(struct drm_device *dev, struct drm_plane *plane,
 				struct drm_plane *cursor)
 {
@@ -1935,6 +1941,11 @@ struct drm_crtc *dpu_crtc_init(struct drm_device *dev, struct drm_plane *plane,
 			crtc->name, ret);
 		return ERR_PTR(ret);
 	}
+
+	/* The helper's data is never freed otherwise: 512 bytes leaked per CRTC on every DRM device teardown */
+	ret = drmm_add_action_or_reset(crtc->dev, dpu_crtc_self_refresh_cleanup, crtc);
+	if (ret)
+		return ERR_PTR(ret);
 
 	DRM_DEBUG_KMS("%s: successfully initialized crtc\n", dpu_crtc->name);
 	return crtc;

@@ -22,6 +22,7 @@
 
 struct ams662zs01 {
 	struct drm_panel panel;
+	struct drm_connector *connector;
 	struct mipi_dsi_device *dsi;
 	struct drm_dsc_config dsc;
 	struct regulator_bulk_data *supplies;
@@ -149,6 +150,12 @@ static int ams662zs01_prepare(struct drm_panel *panel)
 
 	ams662zs01_reset(ctx);
 
+	if (ctx->connector && ctx->connector->state && ctx->connector->state->crtc &&
+	    ctx->connector->state->crtc->state)
+		ctx->hz120 = drm_mode_vrefresh(&ctx->connector->state->crtc->state->adjusted_mode) > 90;
+	else
+		ctx->hz120 = true;
+
 	ret = ams662zs01_on(ctx, ctx->hz120);
 	if (ret < 0) {
 		dev_err(dev, "Failed to initialize panel: %d\n", ret);
@@ -184,29 +191,41 @@ static int ams662zs01_unprepare(struct drm_panel *panel)
 	return 0;
 }
 
-#define AMS662ZS01_MODE(_hz, _hfp)							\
+/*
+ * In command mode the DSI clock is derived from the mode's pixel clock, not from a real blanking period.
+ * The vendor tree runs the link at 800-830 MHz; that leaves ~1.3 ms of slack per 120 Hz frame, so the 120 Hz
+ * mode carries 1216 extra "porch" lines (like the OnePlus 8T panel) to raise the link to ~1.2 Gbit/s per lane.
+ */
+#define AMS662ZS01_MODE(_hz, _hfp, _vfp)						\
 {										\
-	.clock = (1080 + (_hfp) + 10 + 40) * (2400 + 21 + 2 + 9) * (_hz) / 1000,	\
+	.clock = (1080 + (_hfp) + 10 + 40) * (2400 + (_vfp) + 2 + 9) * (_hz) / 1000,	\
 	.hdisplay = 1080,							\
 	.hsync_start = 1080 + (_hfp),						\
 	.hsync_end = 1080 + (_hfp) + 10,					\
 	.htotal = 1080 + (_hfp) + 10 + 40,					\
 	.vdisplay = 2400,							\
-	.vsync_start = 2400 + 21,						\
-	.vsync_end = 2400 + 21 + 2,						\
-	.vtotal = 2400 + 21 + 2 + 9,						\
+	.vsync_start = 2400 + (_vfp),						\
+	.vsync_end = 2400 + (_vfp) + 2,						\
+	.vtotal = 2400 + (_vfp) + 2 + 9,					\
 	.width_mm = 70,								\
 	.height_mm = 153,							\
 	.type = DRM_MODE_TYPE_DRIVER,						\
 }
 
-static const struct drm_display_mode ams662zs01_120_mode = AMS662ZS01_MODE(120, 50);
-static const struct drm_display_mode ams662zs01_60_mode = AMS662ZS01_MODE(60, 540);
+static const struct drm_display_mode ams662zs01_120_mode = AMS662ZS01_MODE(120, 50, 21 + 1216);
+static const struct drm_display_mode ams662zs01_60_mode = AMS662ZS01_MODE(60, 540, 21);
+
+static inline struct ams662zs01 *ctx_from_panel(struct drm_panel *panel)
+{
+	return container_of_const(panel, struct ams662zs01, panel);
+}
 
 static int ams662zs01_get_modes(struct drm_panel *panel,
 			     struct drm_connector *connector)
 {
 	int count = 0;
+
+	ctx_from_panel(panel)->connector = connector;
 
 	/* 120 Hz first (preferred); the mode switch itself is a one-register write, see ams662zs01_on() */
 	count += drm_connector_helper_get_modes_fixed(connector, &ams662zs01_120_mode);

@@ -44,9 +44,7 @@
 	stride = <(1080 * 4)>;
 };
 
-/* Never touch storage, GPU, DP, PCIe or remoteprocs until verified; the display pipeline is enabled for the panel bring-up */
-&ufs_mem_hc { status = "disabled"; };
-&ufs_mem_phy { status = "disabled"; };
+/* Never touch GPU, DP, PCIe2 (modem) or remoteprocs until verified; UFS is enabled for the read-only probe; the display pipeline is enabled for the panel bring-up */
 &mdss_dp { status = "disabled"; };
 &gpu { status = "disabled"; };
 &gmu { status = "disabled"; };

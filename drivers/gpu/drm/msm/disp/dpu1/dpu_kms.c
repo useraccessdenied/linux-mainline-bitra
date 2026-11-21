@@ -402,7 +402,17 @@ static const struct drm_private_state_funcs dpu_kms_global_state_funcs = {
 
 static void dpu_kms_global_obj_fini(struct dpu_kms *dpu_kms)
 {
+	/*
+	 * struct dpu_kms outlives the DRM device across unbind/bind, and
+	 * dpu_kms_destroy() also runs when hw_init failed before the private
+	 * object was set up (or after an earlier teardown already finalised
+	 * it): finalising twice frees the state twice.
+	 */
+	if (!dpu_kms->global_state.funcs)
+		return;
+
 	drm_atomic_private_obj_fini(&dpu_kms->global_state);
+	memset(&dpu_kms->global_state, 0, sizeof(dpu_kms->global_state));
 }
 
 static int dpu_kms_parse_data_bus_icc_path(struct dpu_kms *dpu_kms)

@@ -86,6 +86,7 @@ static int msm_irq_install(struct drm_device *dev, unsigned int irq)
 	ret = msm_irq_postinstall(dev);
 	if (ret) {
 		free_irq(irq, dev);
+		kms->irq_requested = false;
 		return ret;
 	}
 
@@ -98,8 +99,10 @@ static void msm_irq_uninstall(struct drm_device *dev)
 	struct msm_kms *kms = priv->kms;
 
 	kms->funcs->irq_uninstall(kms);
-	if (kms->irq_requested)
+	if (kms->irq_requested) {
 		free_irq(kms->irq, dev);
+		kms->irq_requested = false;
+	}
 }
 
 struct msm_vblank_work {

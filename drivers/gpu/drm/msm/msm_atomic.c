@@ -132,8 +132,11 @@ int msm_atomic_init_pending_timer(struct msm_pending_timer *timer,
 
 void msm_atomic_destroy_pending_timer(struct msm_pending_timer *timer)
 {
-	if (timer->worker)
+	if (timer->worker) {
 		kthread_destroy_worker(timer->worker);
+		/* struct msm_kms outlives the DRM device; a failed next bring-up destroys it again */
+		timer->worker = NULL;
+	}
 }
 
 static bool can_do_async(struct drm_atomic_commit *state,

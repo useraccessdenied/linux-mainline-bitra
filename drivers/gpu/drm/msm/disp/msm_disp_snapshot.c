@@ -91,7 +91,8 @@ void msm_disp_snapshot_state(struct drm_device *drm_dev)
 	priv = drm_dev->dev_private;
 	kms = priv->kms;
 
-	kthread_queue_work(kms->dump_worker, &kms->dump_work);
+	if (kms->dump_worker)
+		kthread_queue_work(kms->dump_worker, &kms->dump_work);
 }
 
 int msm_disp_snapshot_init(struct drm_device *drm_dev)
@@ -110,8 +111,11 @@ int msm_disp_snapshot_init(struct drm_device *drm_dev)
 	mutex_init(&kms->dump_mutex);
 
 	kms->dump_worker = kthread_run_worker(0, "%s", "disp_snapshot");
-	if (IS_ERR(kms->dump_worker))
+	if (IS_ERR(kms->dump_worker)) {
 		DRM_ERROR("failed to create disp state task\n");
+		/* msm_disp_snapshot_destroy() and the queueing side test for NULL, not for ERR_PTR */
+		kms->dump_worker = NULL;
+	}
 
 	kthread_init_work(&kms->dump_work, _msm_disp_snapshot_work);
 
@@ -131,8 +135,10 @@ void msm_disp_snapshot_destroy(struct drm_device *drm_dev)
 	priv = drm_dev->dev_private;
 	kms = priv->kms;
 
-	if (kms->dump_worker)
+	if (kms->dump_worker) {
 		kthread_destroy_worker(kms->dump_worker);
+		kms->dump_worker = NULL;
+	}
 
 	mutex_destroy(&kms->dump_mutex);
 }

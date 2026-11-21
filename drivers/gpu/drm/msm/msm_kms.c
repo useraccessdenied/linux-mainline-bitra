@@ -13,6 +13,7 @@
 #include <drm/drm_drv.h>
 #include <drm/drm_mode_config.h>
 #include <drm/drm_vblank.h>
+#include <drm/drm_self_refresh_helper.h>
 #include <drm/clients/drm_client_setup.h>
 
 #include "disp/msm_disp_snapshot.h"
@@ -231,6 +232,7 @@ void msm_drm_kms_uninit(struct device *dev)
 	struct msm_drm_private *priv = platform_get_drvdata(pdev);
 	struct drm_device *ddev = priv->dev;
 	struct msm_kms *kms = priv->kms;
+	struct drm_crtc *crtc;
 	int i;
 
 	BUG_ON(!kms);
@@ -242,10 +244,25 @@ void msm_drm_kms_uninit(struct device *dev)
 
 	flush_workqueue(kms->wq);
 
+	/*
+	 * The self-refresh helper's delayed entry work takes a reference on the
+	 * DRM device when it runs (drm_atomic_commit_init). It must be gone
+	 * while we still hold ours: cancelling it from a drmm action is too
+	 * late, the device is already being released (found with a fail-nth
+	 * sweep: "refcount_t: addition on 0" / underflow in
+	 * drm_self_refresh_helper_entry_work after a failed or torn-down
+	 * bring-up).
+	 */
+	drm_for_each_crtc(crtc, ddev)
+		drm_self_refresh_helper_cleanup(crtc);
+
 	/* clean up event worker threads */
 	for (i = 0; i < MAX_CRTCS; i++) {
-		if (kms->event_thread[i].worker)
+		if (kms->event_thread[i].worker) {
 			kthread_destroy_worker(kms->event_thread[i].worker);
+			/* kms outlives the DRM device across unbind/bind: no stale pointer */
+			kms->event_thread[i].worker = NULL;
+		}
 	}
 
 	drm_kms_helper_poll_fini(ddev);

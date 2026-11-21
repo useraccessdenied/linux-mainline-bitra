@@ -927,8 +927,10 @@ static void dpu_kms_destroy(struct msm_kms *kms)
 
 	msm_kms_destroy(&dpu_kms->base);
 
-	if (dpu_kms->rpm_enabled)
+	if (dpu_kms->rpm_enabled) {
 		pm_runtime_disable(&dpu_kms->pdev->dev);
+		dpu_kms->rpm_enabled = false;
+	}
 }
 
 static int dpu_irq_postinstall(struct msm_kms *kms)

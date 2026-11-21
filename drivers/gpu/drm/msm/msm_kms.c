@@ -242,7 +242,8 @@ void msm_drm_kms_uninit(struct device *dev)
 	 * irq after uninstall has disabled it.
 	 */
 
-	flush_workqueue(kms->wq);
+	if (kms->wq)
+		flush_workqueue(kms->wq);
 
 	/*
 	 * The self-refresh helper's delayed entry work takes a reference on the

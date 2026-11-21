@@ -203,7 +203,11 @@ static inline void msm_kms_destroy(struct msm_kms *kms)
 	for (i = 0; i < ARRAY_SIZE(kms->pending_timers); i++)
 		msm_atomic_destroy_pending_timer(&kms->pending_timers[i]);
 
-	destroy_workqueue(kms->wq);
+	/* struct msm_kms outlives the DRM device: do not leave a dangling pointer for the next bring-up's error path */
+	if (kms->wq) {
+		destroy_workqueue(kms->wq);
+		kms->wq = NULL;
+	}
 }
 
 #define for_each_crtc_mask(dev, crtc, crtc_mask) \

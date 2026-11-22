@@ -192,7 +192,7 @@ void msm_devfreq_init(struct msm_gpu *gpu)
 	gpu->cooling = of_devfreq_cooling_register(gpu->pdev->dev.of_node, df->devfreq);
 	if (IS_ERR(gpu->cooling)) {
 		DRM_DEV_ERROR(&gpu->pdev->dev,
-				"Couldn't register GPU cooling device\n");
+				"Couldn't register GPU cooling device (%pe)\n", gpu->cooling);
 		gpu->cooling = NULL;
 	}
 

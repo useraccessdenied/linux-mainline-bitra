@@ -34,7 +34,7 @@
 / {
 	chosen {
 		/* ABL rewrites this in place; it refuses trees whose /chosen has no bootargs */
-		bootargs = "rcupdate.rcu_expedited=1 rcu_nocbs=0-7 kasan_multi_shot";
+		bootargs = "rcupdate.rcu_expedited=1 rcu_nocbs=0-7";
 	};
 };
 
@@ -127,5 +127,19 @@
 		pinctrl-0 = <&ts_int_default>;
 		pinctrl-1 = <&ts_rst_suspend>;
 		pinctrl-names = "default";
+	};
+};
+
+/*
+ * Fuel gauge: TI BQ28Z610 on i2c16 (se16, 0x888000; the stock node is "oplus,bq27541-battery" with qcom,batt_bq28z610), same as the
+ * OnePlus 8T. Read-only: charge level, voltage, current, temperature. The charger itself (MP2650 on i2c5, Oplus charge pump,
+ * RK826 VOOC MCU on i2c16, SMB1390 on i2c15) has no mainline driver and is not touched; see docs/26-battery-charger.md.
+ */
+&i2c16 {
+	status = "okay";
+
+	fuel_gauge: fuel-gauge@55 {
+		compatible = "ti,bq28z610";
+		reg = <0x55>;
 	};
 };

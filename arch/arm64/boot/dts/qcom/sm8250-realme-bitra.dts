@@ -56,10 +56,26 @@
 &pcie2_phy { status = "disabled"; };
 &pm8150l_flash { status = "disabled"; };
 
-/* USB: force gadget mode, no Type-C role switch needed for the debug link */
-&usb_1_dwc3 {
-	dr_mode = "peripheral";
-	/delete-property/ usb-role-switch;
+/* USB: dual-role through the PM8150B Type-C port manager (inherited from the OnePlus 8T tree: usb-role-switch on the DWC3). The debug link used to force "peripheral". */
+
+/*
+ * OTG power: on this phone the 5 V VBUS output in host mode comes from the external MP2650 charger (i2c5 @0x5c), switched by the "mps_otg_en"
+ * GPIO (pm8150 gpio3, output high = on; stock realme DT: oplus,mp2650-charger), not from the PM8150B VBUS regulator. The Type-C port manager
+ * only enables it while the phone is a source (Attached.SRC), never while charging from a host. The driver takes it as the deprecated "vdd-vbus" supply.
+ */
+/ {
+	usb_otg_vbus: regulator-usb-otg-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "usb_otg_vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&pm8150_gpios 3 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+	};
+};
+
+&pm8150b_typec {
+	vdd-vbus-supply = <&usb_otg_vbus>;
 };
 
 &usb_1_qmpphy {

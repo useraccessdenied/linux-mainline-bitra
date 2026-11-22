@@ -163,3 +163,73 @@
 &gpu_zap_shader {
 	firmware-name = "qcom/sm8250/realme/bitra/a650_zap.mdt";
 };
+
+/*
+ * Audio DSP (ADSP). Firmware from this phone's stock modem partition (image/adsp.mdt + adsp.b00-b18, relocatable, 37 MiB): the reserved-memory
+ * map (ADSP at 0x91b00000, 37 MiB) is the stock one, handed over by the bootloader/DTB shim. The other DSPs (CDSP, SLPI) are enabled separately later.
+ */
+&adsp {
+	firmware-name = "qcom/sm8250/realme/bitra/adsp.mdt";
+	status = "okay";
+};
+
+/*
+ * The sound card also lists a DisplayPort playback link whose codec is the DP controller (disabled above): the card would wait for it forever
+ * ("DisplayPort Playback: codec dai not found"). Drop it until DisplayPort is brought up.
+ */
+&sound {
+	model = "realme GT Neo 2";
+	/* WCD938x mic bias / ADC / DMIC / headphone routing, starting point copied from the OnePlus 8T (same codec); bitra's actual mic wiring is unverified */
+	audio-routing =
+		"AMIC2", "MIC BIAS2",
+		"TX DMIC0", "MIC BIAS1",
+		"TX DMIC1", "MIC BIAS1",
+		"TX DMIC2", "MIC BIAS4",
+		"TX DMIC3", "MIC BIAS3",
+		"TX DMIC4", "MIC BIAS4",
+		"TX DMIC5", "MIC BIAS4",
+		"DMIC1", "MIC BIAS1",
+		"DMIC2", "MIC BIAS1",
+		"DMIC3", "MIC BIAS3",
+		"DMIC4", "MIC BIAS3",
+		"DMIC5", "MIC BIAS4",
+		"DMIC6", "MIC BIAS4",
+		"IN1_HPHL", "HPHL_OUT",
+		"IN2_HPHR", "HPHR_OUT",
+		"IN3_AUX", "AUX_OUT",
+		"TX SWR_ADC0", "ADC1_OUTPUT",
+		"TX SWR_ADC1", "ADC2_OUTPUT",
+		"TX SWR_ADC2", "ADC3_OUTPUT",
+		"TX SWR_ADC3", "ADC4_OUTPUT",
+		"TX SWR_DMIC0", "DMIC1_OUTPUT",
+		"TX SWR_DMIC1", "DMIC2_OUTPUT",
+		"TX SWR_DMIC2", "DMIC3_OUTPUT",
+		"TX SWR_DMIC3", "DMIC4_OUTPUT",
+		"TX SWR_DMIC4", "DMIC5_OUTPUT",
+		"TX SWR_DMIC5", "DMIC6_OUTPUT",
+		"TX SWR_DMIC6", "DMIC7_OUTPUT",
+		"TX SWR_DMIC7", "DMIC8_OUTPUT",
+		"RX_TX DEC0_INP", "TX DEC0 MUX",
+		"RX_TX DEC1_INP", "TX DEC1 MUX",
+		"RX_TX DEC2_INP", "TX DEC2 MUX",
+		"RX_TX DEC3_INP", "TX DEC3 MUX",
+		"VA DMIC0", "VA MIC BIAS3",
+		"VA DMIC1", "VA MIC BIAS1",
+		"VA DMIC2", "VA MIC BIAS1",
+		"VA DMIC3", "VA MIC BIAS3",
+		"VA DMIC4", "VA MIC BIAS4",
+		"VA DMIC5", "VA MIC BIAS4",
+		"VA SWR_ADC0", "ADC1_OUTPUT",
+		"VA SWR_ADC1", "ADC2_OUTPUT",
+		"VA SWR_ADC2", "ADC3_OUTPUT",
+		"VA SWR_ADC3", "ADC4_OUTPUT",
+		"VA SWR_MIC0", "DMIC1_OUTPUT",
+		"VA SWR_MIC1", "DMIC2_OUTPUT",
+		"VA SWR_MIC2", "DMIC3_OUTPUT",
+		"VA SWR_MIC3", "DMIC4_OUTPUT",
+		"VA SWR_MIC4", "DMIC5_OUTPUT",
+		"VA SWR_MIC5", "DMIC6_OUTPUT",
+		"VA SWR_MIC6", "DMIC7_OUTPUT",
+		"VA SWR_MIC7", "DMIC8_OUTPUT";
+	/delete-node/ displayport-dai-link;
+};

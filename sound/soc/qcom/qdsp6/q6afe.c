@@ -980,6 +980,14 @@ static int q6afe_callback(struct apr_device *adev, const struct apr_resp_pkt *da
 				res->opcode, res->status);
 		}
 		switch (res->opcode) {
+		case AFE_CMD_REMOTE_LPASS_CORE_HW_VOTE_REQUEST:
+			/* the DSP rejected the request with an error result instead of sending the 0x100f5 response */
+			afe->result.opcode = AFE_CMD_RSP_REMOTE_LPASS_CORE_HW_VOTE_REQUEST;
+			afe->result.status = res->status;
+			wake_up(&afe->wait);
+			break;
+		case AFE_CMD_REMOTE_LPASS_CORE_HW_DEVOTE_REQUEST:
+			break;
 		case AFE_PORT_CMD_SET_PARAM_V2:
 		case AFE_PORT_CMD_DEVICE_STOP:
 		case AFE_PORT_CMD_DEVICE_START:

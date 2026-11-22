@@ -38,7 +38,13 @@
 	};
 };
 
+/*
+ * No driver binds the bootloader framebuffer node (simplefb/simpledrm are off; msm owns the real display clocks), so its clocks and
+ * power domain kept gcc/dispcc from ever reaching sync_state (bootloader votes never released). Keep only the geometry for the efifb console.
+ */
 &framebuffer {
+	/delete-property/ clocks;
+	/delete-property/ power-domains;
 	width = <1080>;
 	height = <2400>;
 	stride = <(1080 * 4)>;
@@ -142,4 +148,12 @@
 		compatible = "ti,bq28z610";
 		reg = <0x55>;
 	};
+};
+
+/*
+ * The QCE crypto engine has no driver in our config, and its interconnect vote kept qnoc 163d000/1700000 from reaching sync_state
+ * (the bootloader's bus bandwidth votes were never released: standby power). Not used, so disable it.
+ */
+&crypto {
+	status = "disabled";
 };

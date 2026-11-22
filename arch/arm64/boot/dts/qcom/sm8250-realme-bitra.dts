@@ -305,3 +305,12 @@
 	firmware-name = "qcom/sm8250/realme/bitra/slpi.mdt";
 	status = "okay";
 };
+
+/*
+ * i2c5 carries the MP2650 main charger (@0x5c; stock: oplus,mp2650-charger, 400 kHz). No driver binds it: the bus is enabled so that its
+ * registers can be read (read-only, i2c-dev) to see what the bootloader programmed (docs/26).
+ */
+&i2c5 {
+	clock-frequency = <400000>;
+	status = "okay";
+};

@@ -283,3 +283,9 @@
 	pinctrl-1 = <&dmic01_sleep>, <&dmic23_sleep>, <&dmic45_sleep>;
 	pinctrl-names = "default", "sleep";
 };
+
+/* Sensor DSP (SLPI): firmware extracted from the stock modem partition (tools/extract-dsp-firmware.py), memory region from the OnePlus common DT */
+&slpi {
+	firmware-name = "qcom/sm8250/realme/bitra/slpi.mdt";
+	status = "okay";
+};

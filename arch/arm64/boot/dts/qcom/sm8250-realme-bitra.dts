@@ -50,10 +50,8 @@
 	stride = <(1080 * 4)>;
 };
 
-/* Never touch GPU, DP, PCIe2 (modem) or remoteprocs until verified; UFS is enabled for the read-only probe; the display pipeline is enabled for the panel bring-up */
+/* GPU enabled 2026-11-22 (see below); never touch DP, PCIe2 (modem) or remoteprocs until verified; UFS is enabled for the read-only probe; the display pipeline is enabled for the panel bring-up */
 &mdss_dp { status = "disabled"; };
-&gpu { status = "disabled"; };
-&gmu { status = "disabled"; };
 &pcie2 { status = "disabled"; };
 &pcie2_phy { status = "disabled"; };
 &pm8150l_flash { status = "disabled"; };
@@ -156,4 +154,12 @@
  */
 &crypto {
 	status = "disabled";
+};
+
+/*
+ * Adreno 650: sqe/gmu come from linux-firmware (qcom/a650_*), the signed ZAP shader is device specific and comes from the stock vendor
+ * firmware of this phone (a650_zap.mdt + .b00-.b02, split MDT layout), installed under /lib/firmware/qcom/sm8250/realme/bitra/.
+ */
+&gpu_zap_shader {
+	firmware-name = "qcom/sm8250/realme/bitra/a650_zap.mdt";
 };

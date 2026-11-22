@@ -218,9 +218,9 @@
 		"RX_TX DEC2_INP", "TX DEC2 MUX",
 		"RX_TX DEC3_INP", "TX DEC3 MUX",
 		"VA DMIC0", "VA MIC BIAS3",
-		"VA DMIC1", "VA MIC BIAS1",
+		"VA DMIC1", "VA MIC BIAS3",
 		"VA DMIC2", "VA MIC BIAS1",
-		"VA DMIC3", "VA MIC BIAS3",
+		"VA DMIC3", "VA MIC BIAS1",
 		"VA DMIC4", "VA MIC BIAS4",
 		"VA DMIC5", "VA MIC BIAS4",
 		"VA SWR_ADC0", "ADC1_OUTPUT",
@@ -236,4 +236,50 @@
 		"VA SWR_MIC6", "DMIC7_OUTPUT",
 		"VA SWR_MIC7", "DMIC8_OUTPUT";
 	/delete-node/ displayport-dai-link;
+};
+
+/*
+ * The stock realme DT enables three DMIC pin pairs (gpio6/7, gpio8/9 and gpio12/13) and its three-microphone setups use DMIC1, DMIC3 and
+ * DMIC4; the OnePlus common file only configures the first two. Add the third pair and route the VA DMIC supplies as the stock DT does.
+ */
+&lpass_tlmm {
+	dmic45_active: dmic45-active-state {
+		clk-pins {
+			pins = "gpio12";
+			function = "dmic3_clk";
+			drive-strength = <8>;
+			output-high;
+		};
+
+		data-pins {
+			pins = "gpio13";
+			function = "dmic3_data";
+			drive-strength = <8>;
+			input-enable;
+		};
+	};
+
+	dmic45_sleep: dmic45-sleep-state {
+		clk-pins {
+			pins = "gpio12";
+			function = "dmic3_clk";
+			drive-strength = <2>;
+			bias-disable;
+			output-low;
+		};
+
+		data-pins {
+			pins = "gpio13";
+			function = "dmic3_data";
+			drive-strength = <2>;
+			bias-pull-down;
+			input-enable;
+		};
+	};
+};
+
+&vamacro {
+	pinctrl-0 = <&dmic01_active>, <&dmic23_active>, <&dmic45_active>;
+	pinctrl-1 = <&dmic01_sleep>, <&dmic23_sleep>, <&dmic45_sleep>;
+	pinctrl-names = "default", "sleep";
 };

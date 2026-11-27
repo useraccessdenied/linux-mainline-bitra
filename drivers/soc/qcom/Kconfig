@@ -171,6 +171,14 @@ config QCOM_RPMH
 	  of hardware components aggregate requests for these resources and
 	  help apply the aggregated state on the resource.
 
+config QCOM_OPLUS_SENSOR_DEVINFO
+	tristate "Oplus sensor inventory for the SLPI (SMEM item 130)"
+	depends on QCOM_SMEM
+	help
+	  Writes the sensor inventory from the devicetree (oplus,sensor-devinfo) into SMEM item 130, which
+	  Oplus/realme SLPI firmware reads to find its I2C sensors (proximity, light, magnetometer).
+	  Needed on realme/OnePlus phones; must run before the SLPI boots.
+
 config QCOM_SMEM
 	tristate "Qualcomm Shared Memory Manager (SMEM)"
 	depends on ARCH_QCOM || COMPILE_TEST

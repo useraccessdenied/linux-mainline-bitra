@@ -249,6 +249,14 @@
 };
 
 /*
+ * Wi-Fi board data: ath11k looks for "bus=pci,qmi-chip-id=0,qmi-board-id=255,variant=realme_GT_Neo_2" in board-2.bin first (the OEM bdwlan.elf of this
+ * phone, added with tools/make-ath11k-board.py) and falls back to the generic entry.
+ */
+&wlan0 {
+	qcom,calibration-variant = "realme_GT_Neo_2";
+};
+
+/*
  * The QCA6390 comes up with the placeholder address 00:00:00:00:5a:ad, which the kernel treats as "unconfigured".
  * Android keeps the real address in vendor storage (persist); until that is read, use a locally administered one.
  * TEMPORARY: replace with the address read from persist (or generated once and stored).
